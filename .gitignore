@@ -1,0 +1,10 @@
+# Roadmap & Private Planning
+ROADMAP.md
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log

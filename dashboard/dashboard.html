@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Focus Pro - Dashboard & Settings</title>
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body data-theme="dark">
+  <div class="dashboard-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="../icons/icon48.png" alt="Logo" class="sidebar-logo">
+        <div>
+          <h1 class="brand-title">Focus Pro</h1>
+          <span class="brand-sub">Pomodoro & Analytics</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="analytics">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Analytics & History</span>
+        </button>
+
+        <button class="nav-item" data-tab="tasks">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          <span>Task Planner</span>
+        </button>
+
+        <button class="nav-item" data-tab="settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="footer-badge">100% Free & Open</div>
+        <p class="footer-note">No paywalls &bull; No telemetry</p>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- ================= TAB 1: ANALYTICS & HISTORY ================= -->
+      <section id="pane-analytics" class="content-pane active">
+        <header class="pane-header">
+          <div>
+            <h2>Productivity & Focus Analytics</h2>
+            <p class="subtitle">Complete insights into your work habits and pomodoro streaks.</p>
+          </div>
+          <div class="header-actions">
+            <button id="exportCsvBtn" class="btn secondary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Export CSV</span>
+            </button>
+            <button id="exportJsonBtn" class="btn secondary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>Backup JSON</span>
+            </button>
+            <label class="btn secondary file-input-label">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>Restore Backup</span>
+              <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+            </label>
+          </div>
+        </header>
+
+        <!-- KPI Summary Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon pomo-icon">🍅</div>
+            <div class="kpi-data">
+              <div class="kpi-value" id="kpiTotalPomos">0</div>
+              <div class="kpi-label">Total Pomodoros</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon time-icon">⏱️</div>
+            <div class="kpi-data">
+              <div class="kpi-value" id="kpiTotalTime">0h 0m</div>
+              <div class="kpi-label">Total Focus Time</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon streak-icon">🔥</div>
+            <div class="kpi-data">
+              <div class="kpi-value" id="kpiStreak">0 Days</div>
+              <div class="kpi-label">Current Streak</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon goal-icon">🎯</div>
+            <div class="kpi-data">
+              <div class="kpi-value" id="kpiTodayPomos">0 / 8</div>
+              <div class="kpi-label">Today's Goal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-row">
+          <!-- Main Activity Trend Chart -->
+          <div class="chart-panel flex-2">
+            <div class="panel-header">
+              <h3>Focus Time Trend</h3>
+              <div class="chart-timeframe-pills">
+                <button class="pill-btn active" data-timeframe="7">7 Days</button>
+                <button class="pill-btn" data-timeframe="30">30 Days</button>
+              </div>
+            </div>
+            <div class="canvas-container">
+              <canvas id="trendChartCanvas" width="620" height="220"></canvas>
+            </div>
+          </div>
+
+          <!-- Tasks Distribution Chart -->
+          <div class="chart-panel flex-1">
+            <div class="panel-header">
+              <h3>Top Tasks Breakdown</h3>
+            </div>
+            <div class="canvas-container">
+              <canvas id="taskDistributionCanvas" width="300" height="220"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Table Section -->
+        <div class="table-panel">
+          <div class="table-header-row">
+            <div>
+              <h3>Session Log History</h3>
+              <p class="table-sub">Detailed chronological list of all finished focus sessions.</p>
+            </div>
+            <div class="table-actions">
+              <select id="historyFilterMode">
+                <option value="all">All Sessions</option>
+                <option value="pomodoro">Pomodoros Only</option>
+                <option value="shortBreak">Short Breaks</option>
+                <option value="longBreak">Long Breaks</option>
+              </select>
+              <button id="clearHistoryBtn" class="btn danger-outline">Clear History</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="historyTable">
+              <thead>
+                <tr>
+                  <th>Date & Time</th>
+                  <th>Mode</th>
+                  <th>Duration</th>
+                  <th>Associated Task</th>
+                  <th style="width: 60px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: TASK PLANNER ================= -->
+      <section id="pane-tasks" class="content-pane">
+        <header class="pane-header">
+          <div>
+            <h2>Task Planner & Estimator</h2>
+            <p class="subtitle">Organize tasks, estimate pomodoros, and assign focus to your timer.</p>
+          </div>
+        </header>
+
+        <!-- Add Task Card -->
+        <div class="card create-task-card">
+          <form id="dashAddTaskForm" class="dash-task-form">
+            <div class="form-group flex-3">
+              <label for="dashTaskTitle">Task Title</label>
+              <input type="text" id="dashTaskTitle" placeholder="e.g. Write report chapter 1..." required>
+            </div>
+            <div class="form-group flex-1">
+              <label for="dashTaskEst">Estimated 🍅</label>
+              <input type="number" id="dashTaskEst" value="2" min="1" max="20" required>
+            </div>
+            <div class="form-group action-group">
+              <button type="submit" class="btn primary">Add Task</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tasks Filter & List -->
+        <div class="tasks-manager-container">
+          <div class="manager-filter-bar">
+            <div class="filter-group">
+              <button class="filter-btn active" data-dash-filter="all">All Tasks</button>
+              <button class="filter-btn" data-dash-filter="active">In Progress</button>
+              <button class="filter-btn" data-dash-filter="completed">Completed</button>
+            </div>
+            <div class="tasks-summary-text" id="tasksSummaryText">0 tasks remaining</div>
+          </div>
+
+          <div class="dash-task-list" id="dashTaskList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: SETTINGS ================= -->
+      <section id="pane-settings" class="content-pane">
+        <header class="pane-header">
+          <div>
+            <h2>Settings & Preferences</h2>
+            <p class="subtitle">Customize timer intervals, notifications, audio chimes, and theme.</p>
+          </div>
+        </header>
+
+        <form id="settingsForm" class="settings-form">
+          <!-- Timer Durations Group -->
+          <div class="settings-section">
+            <h3 class="section-title">Timer Durations</h3>
+            <div class="settings-grid">
+              <div class="setting-item">
+                <label for="setPomodoroTime">Focus Duration (minutes)</label>
+                <input type="number" id="setPomodoroTime" min="1" max="120" value="25">
+                <span class="setting-hint">Standard Pomodoro interval (1–120 min)</span>
+              </div>
+              <div class="setting-item">
+                <label for="setShortBreakTime">Short Break Duration (minutes)</label>
+                <input type="number" id="setShortBreakTime" min="1" max="30" value="5">
+                <span class="setting-hint">Rest between pomodoros</span>
+              </div>
+              <div class="setting-item">
+                <label for="setLongBreakTime">Long Break Duration (minutes)</label>
+                <input type="number" id="setLongBreakTime" min="1" max="60" value="15">
+                <span class="setting-hint">Extended rest after multiple pomodoros</span>
+              </div>
+              <div class="setting-item">
+                <label for="setLongBreakInterval">Long Break Interval</label>
+                <input type="number" id="setLongBreakInterval" min="1" max="10" value="4">
+                <span class="setting-hint">Number of pomodoros before a long break</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Automation Group -->
+          <div class="settings-section">
+            <h3 class="section-title">Automation & Daily Target</h3>
+            <div class="settings-grid">
+              <div class="setting-item toggle-row">
+                <div>
+                  <div class="setting-name">Auto-start Breaks</div>
+                  <div class="setting-hint">Automatically begin break timer when focus session finishes</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setAutoStartBreaks">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item toggle-row">
+                <div>
+                  <div class="setting-name">Auto-start Pomodoros</div>
+                  <div class="setting-hint">Automatically begin next focus timer when break ends</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setAutoStartPomodoros">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <label for="setDailyGoal">Daily Pomodoro Goal</label>
+                <input type="number" id="setDailyGoal" min="1" max="30" value="8">
+                <span class="setting-hint">Target number of pomodoros per day</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sound & Audio Group -->
+          <div class="settings-section">
+            <h3 class="section-title">Sound Alerts & Ambient Audio</h3>
+            <div class="settings-grid">
+              <div class="setting-item toggle-row">
+                <div>
+                  <div class="setting-name">Completion Sound Alert</div>
+                  <div class="setting-hint">Play an audio chime when any session ends</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setSoundNotification">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item sound-select-row">
+                <div class="flex-2">
+                  <label for="setSoundType">Sound Melody</label>
+                  <select id="setSoundType">
+                    <option value="bell">🔔 Japanese Temple Bell (Warm)</option>
+                    <option value="marimba">🪵 Acoustic Marimba</option>
+                    <option value="chime">✨ Crystalline Rising Chime</option>
+                    <option value="digital">📟 Retro Digital Dual-Beep</option>
+                    <option value="zen">🧘 Deep Tibetan Singing Bowl</option>
+                  </select>
+                </div>
+                <div class="flex-1">
+                  <label for="setSoundVolume">Volume (<span id="soundVolVal">80</span>%)</label>
+                  <input type="range" id="setSoundVolume" min="0" max="100" value="80">
+                </div>
+                <button type="button" id="testSoundBtn" class="btn secondary btn-sound-test">
+                  ▶ Test Chime
+                </button>
+              </div>
+
+              <div class="setting-item sound-select-row">
+                <div class="flex-2">
+                  <label for="setAmbientSound">Background Ambient Audio (While Focusing)</label>
+                  <select id="setAmbientSound">
+                    <option value="none">None (Silent Focus)</option>
+                    <option value="whitenoise">Gentle White / Pink Noise</option>
+                    <option value="rain">Soothing Rain Shower</option>
+                    <option value="ticking">Subtle Mechanical Clock Ticking</option>
+                  </select>
+                </div>
+                <div class="flex-1">
+                  <label for="setAmbientVolume">Ambient Volume (<span id="ambientVolVal">30</span>%)</label>
+                  <input type="range" id="setAmbientVolume" min="0" max="100" value="30">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications & Appearance -->
+          <div class="settings-section">
+            <h3 class="section-title">Visual & Notifications</h3>
+            <div class="settings-grid">
+              <div class="setting-item toggle-row">
+                <div>
+                  <div class="setting-name">Desktop Notifications</div>
+                  <div class="setting-hint">Show native system popups with action buttons when a session finishes</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setDesktopNotification">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item toggle-row">
+                <div>
+                  <div class="setting-name">Show Remaining Time on Badge</div>
+                  <div class="setting-hint">Display countdown minutes directly on the extension icon</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setShowBadgeTime">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <label for="setTheme">Interface Theme</label>
+                <select id="setTheme">
+                  <option value="dark">Dark Theme (Default)</option>
+                  <option value="light">Light Theme</option>
+                  <option value="system">Follow System Appearance</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-footer">
+            <button type="submit" class="btn primary btn-large">Save All Preferences</button>
+            <span id="saveStatusToast" class="save-toast" style="display:none;">✓ Preferences saved successfully!</span>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="../shared/storage.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

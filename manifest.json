@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "Pomodoro Focus Pro - Timer, Tasks & Stats",
+  "short_name": "Focus Pro",
+  "version": "1.0.0",
+  "description": "A powerful, paywall-free Pomodoro assistant inspired by Marinara with task management, deep analytics, ambient focus audio, and customizable alerts.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Pomodoro Focus Pro"
+  },
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "options_ui": {
+    "page": "dashboard/dashboard.html",
+    "open_in_tab": true
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "offscreen"
+  ],
+  "commands": {
+    "toggle-timer": {
+      "suggested_key": {
+        "default": "Alt+Shift+P",
+        "mac": "Alt+Shift+P"
+      },
+      "description": "Toggle Start / Pause Timer"
+    },
+    "skip-timer": {
+      "suggested_key": {
+        "default": "Alt+Shift+S",
+        "mac": "Alt+Shift+S"
+      },
+      "description": "Skip to Next Period"
+    },
+    "reset-timer": {
+      "suggested_key": {
+        "default": "Alt+Shift+R",
+        "mac": "Alt+Shift+R"
+      },
+      "description": "Reset Current Timer"
+    }
+  }
+}

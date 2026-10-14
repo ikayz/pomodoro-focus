@@ -1,0 +1,140 @@
+:root {
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  /* Mode Accent Colors */
+  --color-pomodoro: #EF4444;
+  --color-pomodoro-glow: rgba(239, 68, 68, 0.25);
+  --color-pomodoro-soft: rgba(239, 68, 68, 0.12);
+
+  --color-shortBreak: #10B981;
+  --color-shortBreak-glow: rgba(16, 185, 129, 0.25);
+  --color-shortBreak-soft: rgba(16, 185, 129, 0.12);
+
+  --color-longBreak: #3B82F6;
+  --color-longBreak-glow: rgba(59, 130, 246, 0.25);
+  --color-longBreak-soft: rgba(59, 130, 246, 0.12);
+
+  /* Dark Theme (Default) */
+  --bg-primary: #0F172A;
+  --bg-surface: #1E293B;
+  --bg-surface-hover: #283548;
+  --bg-subtle: #334155;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-focus: rgba(255, 255, 255, 0.2);
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+
+  --accent-current: var(--color-pomodoro);
+  --accent-glow: var(--color-pomodoro-glow);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Light Theme overrides */
+body[data-theme="light"] {
+  --bg-primary: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-surface-hover: #F1F5F9;
+  --bg-subtle: #E2E8F0;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-color-focus: rgba(0, 0, 0, 0.2);
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  user-select: none;
+}
+
+/* Mode classes on body to tint accent */
+body.mode-pomodoro {
+  --accent-current: var(--color-pomodoro);
+  --accent-glow: var(--color-pomodoro-glow);
+  --accent-soft: var(--color-pomodoro-soft);
+}
+
+body.mode-shortBreak {
+  --accent-current: var(--color-shortBreak);
+  --accent-glow: var(--color-shortBreak-glow);
+  --accent-soft: var(--color-shortBreak-soft);
+}
+
+body.mode-longBreak {
+  --accent-current: var(--color-longBreak);
+  --accent-glow: var(--color-longBreak-glow);
+  --accent-soft: var(--color-longBreak-soft);
+}
+
+/* Interactive Components */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.15s ease-in-out;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+input, select {
+  font-family: inherit;
+  font-size: 13px;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent-current);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-subtle);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
