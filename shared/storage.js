@@ -21,14 +21,38 @@ const DEFAULT_SETTINGS = {
 };
 
 const DEFAULT_TIMER = {
-  mode: 'pomodoro',         // 'pomodoro' | 'shortBreak' | 'longBreak'
-  status: 'idle',           // 'idle' | 'running' | 'paused'
+  mode: 'pomodoro',         // currently displayed mode: 'pomodoro' | 'shortBreak' | 'longBreak'
+  activeRunningMode: null,  // which mode is actively running (null or 'pomodoro' | 'shortBreak' | 'longBreak')
+  status: 'idle',           // backward-compat: 'idle' | 'running' | 'paused'
   duration: 25 * 60 * 1000, // milliseconds
   targetEndTime: null,      // timestamp in ms
   remainingMs: 25 * 60 * 1000,
   startedAt: null,
   cycleCount: 0,            // completed pomodoros in current set (0 to 3)
-  activeTaskId: null
+  activeTaskId: null,
+  modeStates: {
+    pomodoro: {
+      status: 'idle',
+      duration: 25 * 60 * 1000,
+      targetEndTime: null,
+      remainingMs: 25 * 60 * 1000,
+      startedAt: null
+    },
+    shortBreak: {
+      status: 'idle',
+      duration: 5 * 60 * 1000,
+      targetEndTime: null,
+      remainingMs: 5 * 60 * 1000,
+      startedAt: null
+    },
+    longBreak: {
+      status: 'idle',
+      duration: 15 * 60 * 1000,
+      targetEndTime: null,
+      remainingMs: 15 * 60 * 1000,
+      startedAt: null
+    }
+  }
 };
 
 class ExtensionStorage {
@@ -46,12 +70,84 @@ class ExtensionStorage {
 
   static async getTimer() {
     const res = await chrome.storage.local.get('timer');
-    return { ...DEFAULT_TIMER, ...(res.timer || {}) };
+    const timer = res.timer || {};
+    const settings = await this.getSettings();
+
+    const pomoDur = (settings.pomodoroTime || 25) * 60 * 1000;
+    const shortDur = (settings.shortBreakTime || 5) * 60 * 1000;
+    const longDur = (settings.longBreakTime || 15) * 60 * 1000;
+
+    const merged = {
+      ...DEFAULT_TIMER,
+      ...timer,
+      modeStates: {
+        pomodoro: {
+          status: 'idle',
+          duration: pomoDur,
+          remainingMs: pomoDur,
+          targetEndTime: null,
+          startedAt: null,
+          ...(timer.modeStates?.pomodoro || {})
+        },
+        shortBreak: {
+          status: 'idle',
+          duration: shortDur,
+          remainingMs: shortDur,
+          targetEndTime: null,
+          startedAt: null,
+          ...(timer.modeStates?.shortBreak || {})
+        },
+        longBreak: {
+          status: 'idle',
+          duration: longDur,
+          remainingMs: longDur,
+          targetEndTime: null,
+          startedAt: null,
+          ...(timer.modeStates?.longBreak || {})
+        }
+      }
+    };
+
+    // If upgrading from legacy structure without modeStates:
+    if (!timer.modeStates && timer.status) {
+      const currentMode = timer.mode || 'pomodoro';
+      if (merged.modeStates[currentMode]) {
+        merged.modeStates[currentMode] = {
+          status: timer.status || 'idle',
+          duration: timer.duration || merged.modeStates[currentMode].duration,
+          remainingMs: timer.remainingMs !== undefined ? timer.remainingMs : merged.modeStates[currentMode].remainingMs,
+          targetEndTime: timer.targetEndTime || null,
+          startedAt: timer.startedAt || null
+        };
+        if (timer.status === 'running') {
+          merged.activeRunningMode = currentMode;
+        }
+      }
+    }
+
+    // Keep activeRunningMode in sync if a mode has running status
+    if (!merged.activeRunningMode) {
+      for (const m of ['pomodoro', 'shortBreak', 'longBreak']) {
+        if (merged.modeStates[m]?.status === 'running') {
+          merged.activeRunningMode = m;
+          break;
+        }
+      }
+    }
+
+    return merged;
   }
 
   static async setTimer(newTimer) {
     const current = await this.getTimer();
-    const merged = { ...current, ...newTimer };
+    const merged = {
+      ...current,
+      ...newTimer,
+      modeStates: {
+        ...current.modeStates,
+        ...(newTimer.modeStates || {})
+      }
+    };
     await chrome.storage.local.set({ timer: merged });
     return merged;
   }

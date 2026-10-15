@@ -735,18 +735,31 @@ function setupEventListeners() {
     settingsState = await ExtensionStorage.setSettings(updated);
     applyTheme(settingsState.theme);
 
-    // If timer is idle, update duration to match new settings
-    if (timerState.status === 'idle') {
-      const newDuration = (timerState.mode === 'pomodoro'
-        ? settingsState.pomodoroTime
-        : timerState.mode === 'shortBreak'
-        ? settingsState.shortBreakTime
-        : settingsState.longBreakTime) * 60 * 1000;
+    // Update idle mode durations to reflect new settings
+    const timer = await ExtensionStorage.getTimer();
+    const pomoDur = settingsState.pomodoroTime * 60 * 1000;
+    const shortDur = settingsState.shortBreakTime * 60 * 1000;
+    const longDur = settingsState.longBreakTime * 60 * 1000;
 
-      await ExtensionStorage.setTimer({
-        duration: newDuration,
-        remainingMs: newDuration
-      });
+    if (timer.modeStates) {
+      if (timer.modeStates.pomodoro?.status === 'idle') {
+        timer.modeStates.pomodoro.duration = pomoDur;
+        timer.modeStates.pomodoro.remainingMs = pomoDur;
+      }
+      if (timer.modeStates.shortBreak?.status === 'idle') {
+        timer.modeStates.shortBreak.duration = shortDur;
+        timer.modeStates.shortBreak.remainingMs = shortDur;
+      }
+      if (timer.modeStates.longBreak?.status === 'idle') {
+        timer.modeStates.longBreak.duration = longDur;
+        timer.modeStates.longBreak.remainingMs = longDur;
+      }
+      const curModeState = timer.modeStates[timer.mode];
+      if (curModeState && curModeState.status === 'idle') {
+        timer.duration = curModeState.duration;
+        timer.remainingMs = curModeState.remainingMs;
+      }
+      await ExtensionStorage.setTimer(timer);
     }
 
     await chrome.runtime.sendMessage({ action: 'UPDATE_BADGE' });

@@ -64,23 +64,26 @@ async function updateBadge() {
     return;
   }
 
-  // Set badge background color based on mode & status
-  let badgeColor = '#EF4444'; // Pomodoro
-  if (timer.status === 'paused') {
+  // Display badge for the active running mode, or fall back to the displayed mode
+  const activeMode = timer.activeRunningMode || timer.mode || 'pomodoro';
+  const modeState = (timer.modeStates && timer.modeStates[activeMode]) || timer;
+
+  let badgeColor = '#EF4444'; // Pomodoro Red
+  if (modeState.status === 'paused') {
     badgeColor = '#F59E0B'; // Paused Amber
-  } else if (timer.mode === 'shortBreak') {
+  } else if (activeMode === 'shortBreak') {
     badgeColor = '#10B981'; // Green
-  } else if (timer.mode === 'longBreak') {
+  } else if (activeMode === 'longBreak') {
     badgeColor = '#3B82F6'; // Blue
   }
   chrome.action.setBadgeBackgroundColor({ color: badgeColor });
 
-  if (timer.status === 'running' && timer.targetEndTime) {
-    const diffMs = Math.max(0, timer.targetEndTime - Date.now());
+  if (modeState.status === 'running' && modeState.targetEndTime) {
+    const diffMs = Math.max(0, modeState.targetEndTime - Date.now());
     const remainingMinutes = Math.ceil(diffMs / 60000);
     const badgeText = remainingMinutes < 1 ? '<1m' : `${remainingMinutes}m`;
     chrome.action.setBadgeText({ text: badgeText });
-  } else if (timer.status === 'paused') {
+  } else if (modeState.status === 'paused') {
     chrome.action.setBadgeText({ text: '||' });
   } else {
     chrome.action.setBadgeText({ text: '' });
@@ -88,26 +91,53 @@ async function updateBadge() {
 }
 
 // ----------------- Timer Controls -----------------
-async function startTimer() {
+async function startTimer(targetMode = null) {
   const timer = await ExtensionStorage.getTimer();
   const settings = await ExtensionStorage.getSettings();
+  const mode = targetMode || timer.mode || 'pomodoro';
 
   const now = Date.now();
-  let remainingMs = timer.remainingMs;
+  const modeState = timer.modeStates[mode] || {
+    status: 'idle',
+    duration: getModeDuration(mode, settings),
+    remainingMs: getModeDuration(mode, settings),
+    targetEndTime: null
+  };
 
-  if (timer.status === 'idle' || !remainingMs) {
-    remainingMs = getModeDuration(timer.mode, settings);
+  // If another mode is currently running, pause it first
+  if (timer.activeRunningMode && timer.activeRunningMode !== mode) {
+    const prevRunningMode = timer.activeRunningMode;
+    const prevRunningState = timer.modeStates[prevRunningMode];
+    if (prevRunningState && prevRunningState.status === 'running') {
+      const remainingPrev = Math.max(0, (prevRunningState.targetEndTime || now) - now);
+      prevRunningState.status = 'paused';
+      prevRunningState.targetEndTime = null;
+      prevRunningState.remainingMs = remainingPrev;
+    }
+  }
+
+  let remainingMs = modeState.remainingMs;
+  if (modeState.status === 'idle' || !remainingMs) {
+    remainingMs = getModeDuration(mode, settings);
+    modeState.duration = remainingMs;
   }
 
   const targetEndTime = now + remainingMs;
 
-  await ExtensionStorage.setTimer({
-    status: 'running',
-    startedAt: now,
-    targetEndTime,
-    duration: getModeDuration(timer.mode, settings),
-    remainingMs
-  });
+  modeState.status = 'running';
+  modeState.startedAt = now;
+  modeState.targetEndTime = targetEndTime;
+  modeState.remainingMs = remainingMs;
+
+  timer.modeStates[mode] = modeState;
+  timer.activeRunningMode = mode;
+  timer.mode = mode;
+  timer.status = 'running';
+  timer.targetEndTime = targetEndTime;
+  timer.duration = modeState.duration;
+  timer.remainingMs = remainingMs;
+
+  await ExtensionStorage.setTimer(timer);
 
   // Schedule precise end alarm
   await chrome.alarms.clear('timer-end');
@@ -118,53 +148,80 @@ async function startTimer() {
   await chrome.alarms.create('timer-tick', { periodInMinutes: 1 });
 
   // Ambient sound if enabled and in pomodoro mode
-  if (timer.mode === 'pomodoro' && settings.ambientSound && settings.ambientSound !== 'none') {
+  if (mode === 'pomodoro' && settings.ambientSound && settings.ambientSound !== 'none') {
     playAudio('startAmbient', {
       ambientType: settings.ambientSound,
       volume: settings.ambientVolume
     });
+  } else {
+    playAudio('stopAmbient');
   }
 
   updateBadge();
 }
 
-async function pauseTimer() {
+async function pauseTimer(targetMode = null) {
   const timer = await ExtensionStorage.getTimer();
-  if (timer.status !== 'running') return;
+  const mode = targetMode || timer.activeRunningMode || timer.mode || 'pomodoro';
+  const modeState = timer.modeStates[mode];
+
+  if (!modeState || modeState.status !== 'running') return;
 
   const now = Date.now();
-  const remainingMs = Math.max(0, (timer.targetEndTime || now) - now);
+  const remainingMs = Math.max(0, (modeState.targetEndTime || now) - now);
 
-  await chrome.alarms.clear('timer-end');
-  await chrome.alarms.clear('timer-tick');
+  modeState.status = 'paused';
+  modeState.targetEndTime = null;
+  modeState.remainingMs = remainingMs;
 
-  await ExtensionStorage.setTimer({
-    status: 'paused',
-    targetEndTime: null,
-    remainingMs
-  });
+  if (timer.activeRunningMode === mode) {
+    await chrome.alarms.clear('timer-end');
+    await chrome.alarms.clear('timer-tick');
+    timer.activeRunningMode = null;
+    playAudio('stopAmbient');
+  }
 
-  playAudio('stopAmbient');
+  timer.modeStates[mode] = modeState;
+  if (timer.mode === mode) {
+    timer.status = 'paused';
+    timer.targetEndTime = null;
+    timer.remainingMs = remainingMs;
+  }
+
+  await ExtensionStorage.setTimer(timer);
   updateBadge();
 }
 
-async function resetTimer() {
+async function resetTimer(targetMode = null) {
   const timer = await ExtensionStorage.getTimer();
   const settings = await ExtensionStorage.getSettings();
+  const mode = targetMode || timer.mode || 'pomodoro';
 
-  await chrome.alarms.clear('timer-end');
-  await chrome.alarms.clear('timer-tick');
+  if (timer.activeRunningMode === mode) {
+    await chrome.alarms.clear('timer-end');
+    await chrome.alarms.clear('timer-tick');
+    timer.activeRunningMode = null;
+    playAudio('stopAmbient');
+  }
 
-  const duration = getModeDuration(timer.mode, settings);
+  const duration = getModeDuration(mode, settings);
 
-  await ExtensionStorage.setTimer({
+  timer.modeStates[mode] = {
     status: 'idle',
     targetEndTime: null,
     duration,
-    remainingMs: duration
-  });
+    remainingMs: duration,
+    startedAt: null
+  };
 
-  playAudio('stopAmbient');
+  if (timer.mode === mode) {
+    timer.status = 'idle';
+    timer.targetEndTime = null;
+    timer.duration = duration;
+    timer.remainingMs = duration;
+  }
+
+  await ExtensionStorage.setTimer(timer);
   updateBadge();
 }
 
@@ -172,15 +229,32 @@ async function skipTimer() {
   const timer = await ExtensionStorage.getTimer();
   const settings = await ExtensionStorage.getSettings();
 
-  await chrome.alarms.clear('timer-end');
-  await chrome.alarms.clear('timer-tick');
-  playAudio('stopAmbient');
+  const activeMode = timer.activeRunningMode || timer.mode;
 
-  // Transition to next mode without logging full completion
+  if (timer.activeRunningMode) {
+    await chrome.alarms.clear('timer-end');
+    await chrome.alarms.clear('timer-tick');
+    playAudio('stopAmbient');
+    timer.activeRunningMode = null;
+  }
+
+  // Reset the mode that was skipped
+  const currDuration = getModeDuration(activeMode, settings);
+  if (timer.modeStates[activeMode]) {
+    timer.modeStates[activeMode] = {
+      status: 'idle',
+      targetEndTime: null,
+      duration: currDuration,
+      remainingMs: currDuration,
+      startedAt: null
+    };
+  }
+
+  // Determine next mode in cycle
   let nextMode = 'pomodoro';
   let nextCycle = timer.cycleCount;
 
-  if (timer.mode === 'pomodoro') {
+  if (activeMode === 'pomodoro') {
     nextCycle = timer.cycleCount + 1;
     if (nextCycle >= settings.longBreakInterval) {
       nextMode = 'longBreak';
@@ -192,36 +266,52 @@ async function skipTimer() {
     nextMode = 'pomodoro';
   }
 
-  const duration = getModeDuration(nextMode, settings);
+  const nextDuration = getModeDuration(nextMode, settings);
 
-  await ExtensionStorage.setTimer({
-    mode: nextMode,
-    status: 'idle',
-    targetEndTime: null,
-    duration,
-    remainingMs: duration,
-    cycleCount: nextCycle
-  });
+  timer.mode = nextMode;
+  timer.cycleCount = nextCycle;
+  timer.status = 'idle';
+  timer.targetEndTime = null;
+  timer.duration = nextDuration;
+  timer.remainingMs = nextDuration;
 
+  if (timer.modeStates[nextMode]) {
+    timer.modeStates[nextMode] = {
+      status: 'idle',
+      targetEndTime: null,
+      duration: nextDuration,
+      remainingMs: nextDuration,
+      startedAt: null
+    };
+  }
+
+  await ExtensionStorage.setTimer(timer);
   updateBadge();
 }
 
 async function switchMode(newMode) {
+  const timer = await ExtensionStorage.getTimer();
   const settings = await ExtensionStorage.getSettings();
-  await chrome.alarms.clear('timer-end');
-  await chrome.alarms.clear('timer-tick');
-  playAudio('stopAmbient');
 
-  const duration = getModeDuration(newMode, settings);
+  // Simply switch the displayed mode tab.
+  // DO NOT clear alarms, DO NOT cancel running timers, DO NOT reset progress!
+  timer.mode = newMode;
 
-  await ExtensionStorage.setTimer({
-    mode: newMode,
-    status: 'idle',
-    targetEndTime: null,
-    duration,
-    remainingMs: duration
-  });
+  const modeState = timer.modeStates[newMode];
+  if (modeState && modeState.status === 'idle') {
+    const dur = getModeDuration(newMode, settings);
+    modeState.duration = dur;
+    modeState.remainingMs = dur;
+  }
 
+  // Reflect viewed mode in top-level fields
+  const currentView = timer.modeStates[newMode] || { status: 'idle' };
+  timer.status = currentView.status;
+  timer.targetEndTime = currentView.targetEndTime;
+  timer.remainingMs = currentView.remainingMs;
+  timer.duration = currentView.duration;
+
+  await ExtensionStorage.setTimer(timer);
   updateBadge();
 }
 
@@ -258,6 +348,21 @@ async function handleTimerComplete() {
   await chrome.alarms.clear('timer-tick');
   playAudio('stopAmbient');
 
+  const completedMode = timer.activeRunningMode || timer.mode || 'pomodoro';
+  timer.activeRunningMode = null;
+
+  // Reset the completed mode
+  const completedModeDuration = getModeDuration(completedMode, settings);
+  if (timer.modeStates[completedMode]) {
+    timer.modeStates[completedMode] = {
+      status: 'idle',
+      targetEndTime: null,
+      duration: completedModeDuration,
+      remainingMs: completedModeDuration,
+      startedAt: null
+    };
+  }
+
   // 1. Play alert chime
   if (settings.soundNotification) {
     playAudio('playAlert', {
@@ -272,7 +377,7 @@ async function handleTimerComplete() {
     activeTask = tasks.find(t => t.id === timer.activeTaskId);
   }
 
-  if (timer.mode === 'pomodoro') {
+  if (completedMode === 'pomodoro') {
     await ExtensionStorage.addHistoryEntry({
       mode: 'pomodoro',
       durationMinutes: settings.pomodoroTime,
@@ -289,7 +394,7 @@ async function handleTimerComplete() {
 
   // 3. Desktop Notification
   if (settings.desktopNotification) {
-    const isPomo = timer.mode === 'pomodoro';
+    const isPomo = completedMode === 'pomodoro';
     const title = isPomo ? '🍅 Pomodoro Finished!' : '☕ Break Completed!';
     const message = isPomo
       ? (activeTask ? `Great work on "${activeTask.title}"! Take a well-deserved break.` : 'Great focus session! Time to stretch and relax.')
@@ -312,7 +417,7 @@ async function handleTimerComplete() {
   let nextMode = 'pomodoro';
   let nextCycle = timer.cycleCount;
 
-  if (timer.mode === 'pomodoro') {
+  if (completedMode === 'pomodoro') {
     nextCycle = timer.cycleCount + 1;
     if (nextCycle >= settings.longBreakInterval) {
       nextMode = 'longBreak';
@@ -330,19 +435,31 @@ async function handleTimerComplete() {
   const shouldAutoStart = (nextMode !== 'pomodoro' && settings.autoStartBreaks) ||
                           (nextMode === 'pomodoro' && settings.autoStartPomodoros);
 
+  timer.mode = nextMode;
+  timer.cycleCount = nextCycle;
+
   if (shouldAutoStart) {
     const now = Date.now();
     const targetEndTime = now + nextDuration;
 
-    await ExtensionStorage.setTimer({
-      mode: nextMode,
-      status: 'running',
-      startedAt: now,
-      targetEndTime,
-      duration: nextDuration,
-      remainingMs: nextDuration,
-      cycleCount: nextCycle
-    });
+    timer.activeRunningMode = nextMode;
+    timer.status = 'running';
+    timer.startedAt = now;
+    timer.targetEndTime = targetEndTime;
+    timer.duration = nextDuration;
+    timer.remainingMs = nextDuration;
+
+    if (timer.modeStates[nextMode]) {
+      timer.modeStates[nextMode] = {
+        status: 'running',
+        startedAt: now,
+        targetEndTime,
+        duration: nextDuration,
+        remainingMs: nextDuration
+      };
+    }
+
+    await ExtensionStorage.setTimer(timer);
 
     await chrome.alarms.create('timer-end', { when: targetEndTime });
     await chrome.alarms.create('timer-tick', { periodInMinutes: 1 });
@@ -354,14 +471,22 @@ async function handleTimerComplete() {
       });
     }
   } else {
-    await ExtensionStorage.setTimer({
-      mode: nextMode,
-      status: 'idle',
-      targetEndTime: null,
-      duration: nextDuration,
-      remainingMs: nextDuration,
-      cycleCount: nextCycle
-    });
+    timer.status = 'idle';
+    timer.targetEndTime = null;
+    timer.duration = nextDuration;
+    timer.remainingMs = nextDuration;
+
+    if (timer.modeStates[nextMode]) {
+      timer.modeStates[nextMode] = {
+        status: 'idle',
+        startedAt: null,
+        targetEndTime: null,
+        duration: nextDuration,
+        remainingMs: nextDuration
+      };
+    }
+
+    await ExtensionStorage.setTimer(timer);
   }
 
   updateBadge();

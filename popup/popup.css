@@ -163,6 +163,49 @@
   box-shadow: 0 2px 8px var(--accent-glow);
 }
 
+.pill-pulse-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-left: 4px;
+  vertical-align: middle;
+  animation: pulse-dot 1.4s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.7); }
+}
+
+.bg-running-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--accent-soft, rgba(239, 68, 68, 0.12));
+  border: 1px solid var(--accent-current);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.bg-switch-btn {
+  background: var(--accent-current);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.bg-switch-btn:hover {
+  opacity: 0.9;
+}
+
 /* Circular Dial */
 .dial-container {
   position: relative;

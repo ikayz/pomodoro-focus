@@ -24,8 +24,11 @@ const resetBtn = document.getElementById('resetBtn');
 const skipBtn = document.getElementById('skipBtn');
 const cycleIndicator = document.getElementById('cycleIndicator');
 
-// Mode pills
+// Mode pills & Background Banner
 const modePills = document.querySelectorAll('.mode-pill');
+const bgRunningBanner = document.getElementById('bgRunningBanner');
+const bgRunningText = document.getElementById('bgRunningText');
+const bgSwitchBtn = document.getElementById('bgSwitchBtn');
 
 // Active task widget
 const activeTaskCard = document.getElementById('activeTaskCard');
@@ -94,8 +97,23 @@ function updateModeView(mode) {
   document.body.classList.remove('mode-pomodoro', 'mode-shortBreak', 'mode-longBreak');
   document.body.classList.add(`mode-${mode}`);
 
+  const activeRunning = timerState?.activeRunningMode;
+
   modePills.forEach(pill => {
-    pill.classList.toggle('active', pill.dataset.mode === mode);
+    const pillMode = pill.dataset.mode;
+    pill.classList.toggle('active', pillMode === mode);
+
+    // Pill running indicator dot
+    let dot = pill.querySelector('.pill-pulse-dot');
+    if (activeRunning === pillMode) {
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'pill-pulse-dot';
+        pill.appendChild(dot);
+      }
+    } else if (dot) {
+      dot.remove();
+    }
   });
 }
 
@@ -125,11 +143,13 @@ function startRenderLoop() {
 function renderTimer() {
   if (!timerState) return;
 
-  let remainingMs = timerState.remainingMs;
+  const currentMode = timerState.mode || 'pomodoro';
+  const modeState = (timerState.modeStates && timerState.modeStates[currentMode]) || timerState;
   const now = Date.now();
 
-  if (timerState.status === 'running' && timerState.targetEndTime) {
-    remainingMs = Math.max(0, timerState.targetEndTime - now);
+  let remainingMs = modeState.remainingMs;
+  if (modeState.status === 'running' && modeState.targetEndTime) {
+    remainingMs = Math.max(0, modeState.targetEndTime - now);
   }
 
   // Format MM:SS
@@ -140,12 +160,12 @@ function renderTimer() {
   timeDisplay.textContent = timeStr;
 
   // Status Label
-  if (timerState.status === 'running') {
-    statusLabel.textContent = timerState.mode === 'pomodoro' ? 'Focusing' : 'Resting';
+  if (modeState.status === 'running') {
+    statusLabel.textContent = currentMode === 'pomodoro' ? 'Focusing' : 'Resting';
     playIcon.style.display = 'none';
     pauseIcon.style.display = 'block';
     toggleBtnText.textContent = 'Pause';
-  } else if (timerState.status === 'paused') {
+  } else if (modeState.status === 'paused') {
     statusLabel.textContent = 'Paused';
     playIcon.style.display = 'block';
     pauseIcon.style.display = 'none';
@@ -158,10 +178,30 @@ function renderTimer() {
   }
 
   // Progress Ring
-  const totalDuration = timerState.duration || (25 * 60 * 1000);
+  const totalDuration = modeState.duration || (25 * 60 * 1000);
   const progressRatio = Math.max(0, Math.min(1, remainingMs / totalDuration));
   const offset = CIRCLE_CIRCUMFERENCE * (1 - progressRatio);
   progressRing.style.strokeDashoffset = offset;
+
+  // Background Running Banner
+  if (bgRunningBanner) {
+    const runningMode = timerState.activeRunningMode;
+    if (runningMode && runningMode !== currentMode) {
+      const runningState = timerState.modeStates[runningMode];
+      const otherRem = runningState?.targetEndTime ? Math.max(0, runningState.targetEndTime - now) : 0;
+      const otherSec = Math.ceil(otherRem / 1000);
+      const otherMin = Math.floor(otherSec / 60);
+      const otherS = otherSec % 60;
+      const otherTime = `${String(otherMin).padStart(2, '0')}:${String(otherS).padStart(2, '0')}`;
+
+      const modeNames = { pomodoro: 'Focus', shortBreak: 'Short Break', longBreak: 'Long Break' };
+      bgRunningBanner.style.display = 'flex';
+      bgRunningText.textContent = `🍅 ${modeNames[runningMode]} running (${otherTime})`;
+      bgSwitchBtn.textContent = `View`;
+    } else {
+      bgRunningBanner.style.display = 'none';
+    }
+  }
 }
 
 // ----------------- Active Task Widget -----------------
@@ -395,16 +435,20 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 function setupEventListeners() {
   // Timer Controls
   toggleBtn.addEventListener('click', async () => {
-    if (timerState.status === 'running') {
-      await chrome.runtime.sendMessage({ action: 'PAUSE_TIMER' });
+    const currentMode = timerState.mode || 'pomodoro';
+    const modeState = (timerState.modeStates && timerState.modeStates[currentMode]) || timerState;
+
+    if (modeState.status === 'running') {
+      await chrome.runtime.sendMessage({ action: 'PAUSE_TIMER', mode: currentMode });
     } else {
-      await chrome.runtime.sendMessage({ action: 'START_TIMER' });
+      await chrome.runtime.sendMessage({ action: 'START_TIMER', mode: currentMode });
     }
     await loadState();
   });
 
   resetBtn.addEventListener('click', async () => {
-    await chrome.runtime.sendMessage({ action: 'RESET_TIMER' });
+    const currentMode = timerState.mode || 'pomodoro';
+    await chrome.runtime.sendMessage({ action: 'RESET_TIMER', mode: currentMode });
     await loadState();
   });
 
@@ -413,10 +457,21 @@ function setupEventListeners() {
     await loadState();
   });
 
-  // Mode Pills
+  // Switch to background running timer
+  if (bgSwitchBtn) {
+    bgSwitchBtn.addEventListener('click', async () => {
+      if (timerState.activeRunningMode) {
+        await chrome.runtime.sendMessage({ action: 'SWITCH_MODE', mode: timerState.activeRunningMode });
+        await loadState();
+      }
+    });
+  }
+
+  // Mode Pills (switches view tab only, does NOT reset timer)
   modePills.forEach(pill => {
     pill.addEventListener('click', async () => {
       const mode = pill.dataset.mode;
+      if (mode === timerState.mode) return;
       await chrome.runtime.sendMessage({ action: 'SWITCH_MODE', mode });
       await loadState();
     });
