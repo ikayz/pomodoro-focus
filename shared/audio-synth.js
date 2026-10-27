@@ -12,13 +12,17 @@ class AudioSynth {
     this.currentAmbientType = null;
   }
 
-  getAudioContext() {
+  async getAudioContext() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       this.ctx = new AudioCtx();
     }
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      try {
+        await this.ctx.resume();
+      } catch (e) {
+        console.warn('AudioContext resume error:', e);
+      }
     }
     return this.ctx;
   }
@@ -30,7 +34,7 @@ class AudioSynth {
    */
   async playAlert(soundType = 'bell', volume = 80) {
     try {
-      const ctx = this.getAudioContext();
+      const ctx = await this.getAudioContext();
       const masterGain = ctx.createGain();
       const vol = Math.max(0, Math.min(1, volume / 100));
       masterGain.gain.setValueAtTime(vol, ctx.currentTime);
@@ -189,12 +193,12 @@ class AudioSynth {
    * @param {string} type - 'none' | 'whitenoise' | 'rain' | 'ticking'
    * @param {number} volume - 0 to 100
    */
-  startAmbient(type = 'none', volume = 30) {
+  async startAmbient(type = 'none', volume = 30) {
     this.stopAmbient();
     if (!type || type === 'none') return;
 
     try {
-      const ctx = this.getAudioContext();
+      const ctx = await this.getAudioContext();
       this.currentAmbientType = type;
       const vol = Math.max(0, Math.min(1, volume / 100)) * 0.4;
 

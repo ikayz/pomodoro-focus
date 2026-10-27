@@ -56,6 +56,7 @@ const setAmbientSound = document.getElementById('setAmbientSound');
 const setAmbientVolume = document.getElementById('setAmbientVolume');
 const ambientVolVal = document.getElementById('ambientVolVal');
 const setDesktopNotification = document.getElementById('setDesktopNotification');
+const setOpenAlertWindow = document.getElementById('setOpenAlertWindow');
 const setShowBadgeTime = document.getElementById('setShowBadgeTime');
 const setTheme = document.getElementById('setTheme');
 const saveStatusToast = document.getElementById('saveStatusToast');
@@ -514,6 +515,7 @@ function populateSettingsForm() {
   ambientVolVal.textContent = settingsState.ambientVolume || 30;
 
   setDesktopNotification.checked = !!settingsState.desktopNotification;
+  if (setOpenAlertWindow) setOpenAlertWindow.checked = settingsState.openAlertWindow !== false;
   setShowBadgeTime.checked = !!settingsState.showBadgeTime;
   setTheme.value = settingsState.theme || 'dark';
 }
@@ -728,6 +730,7 @@ function setupEventListeners() {
       ambientSound: setAmbientSound.value,
       ambientVolume: parseInt(setAmbientVolume.value, 10) || 30,
       desktopNotification: setDesktopNotification.checked,
+      openAlertWindow: setOpenAlertWindow ? setOpenAlertWindow.checked : true,
       showBadgeTime: setShowBadgeTime.checked,
       theme: setTheme.value
     };

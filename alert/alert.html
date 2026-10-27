@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session Complete - Focus Pro</title>
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="alert.css">
+</head>
+<body class="mode-pomodoro" data-theme="dark">
+  <div class="alert-window">
+    <div class="alert-header">
+      <div class="alert-icon-wrapper" id="alertIconWrapper">
+        <span class="alert-icon" id="alertIcon">🍅</span>
+      </div>
+      <div class="alert-title-group">
+        <h1 class="alert-title" id="alertTitle">Pomodoro Finished!</h1>
+        <p class="alert-subtitle" id="alertSubtitle">Outstanding focus! Time to relax and recharge.</p>
+      </div>
+    </div>
+
+    <!-- Active Task Banner (if task was worked on) -->
+    <div class="alert-task-banner" id="alertTaskBanner" style="display:none;">
+      <span class="task-banner-label">Active Task:</span>
+      <span class="task-banner-title" id="alertTaskTitle">Research project</span>
+      <span class="task-banner-pomo" id="alertTaskPomo">🍅 +1</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="alert-actions">
+      <button id="primaryActionBtn" class="btn-action primary">
+        <span id="primaryActionIcon">☕</span>
+        <span id="primaryActionText">Take Break</span>
+        <span class="btn-shortcut-hint">↵ Enter</span>
+      </button>
+
+      <button id="dismissBtn" class="btn-action secondary" title="Dismiss (Esc)">
+        <span>Dismiss</span>
+      </button>
+    </div>
+
+    <!-- Footer Controls -->
+    <div class="alert-footer">
+      <span class="cycle-text" id="cycleText">Session 1 of 4</span>
+      <button id="replaySoundBtn" class="btn-icon" title="Replay sound alert">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="../shared/audio-synth.js"></script>
+  <script src="../shared/storage.js"></script>
+  <script src="alert.js"></script>
+</body>
+</html>

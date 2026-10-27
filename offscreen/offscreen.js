@@ -8,24 +8,30 @@ const synth = new AudioSynth();
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.target !== 'offscreen') return;
 
-  switch (message.action) {
-    case 'playAlert':
-      synth.playAlert(message.soundType || 'bell', message.volume || 80);
-      sendResponse({ status: 'ok' });
-      break;
+  (async () => {
+    switch (message.action) {
+      case 'ping':
+        sendResponse({ status: 'ready' });
+        break;
 
-    case 'startAmbient':
-      synth.startAmbient(message.ambientType, message.volume || 30);
-      sendResponse({ status: 'ok' });
-      break;
+      case 'playAlert':
+        await synth.playAlert(message.soundType || 'bell', message.volume || 80);
+        sendResponse({ status: 'ok' });
+        break;
 
-    case 'stopAmbient':
-      synth.stopAmbient();
-      sendResponse({ status: 'ok' });
-      break;
+      case 'startAmbient':
+        await synth.startAmbient(message.ambientType, message.volume || 30);
+        sendResponse({ status: 'ok' });
+        break;
 
-    default:
-      sendResponse({ status: 'unknown_action' });
-  }
+      case 'stopAmbient':
+        synth.stopAmbient();
+        sendResponse({ status: 'ok' });
+        break;
+
+      default:
+        sendResponse({ status: 'unknown_action' });
+    }
+  })();
   return true;
 });

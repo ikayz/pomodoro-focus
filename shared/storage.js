@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS = {
   soundType: 'bell',        // 'bell' | 'marimba' | 'chime' | 'digital' | 'zen'
   soundVolume: 80,          // 0-100
   desktopNotification: true,
+  openAlertWindow: true,
   showBadgeTime: true,
   dailyGoal: 8,             // target pomodoros per day
   theme: 'dark',            // 'dark' | 'light' | 'system'

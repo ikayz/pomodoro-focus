@@ -7,6 +7,8 @@ importScripts('../shared/storage.js');
 
 let offscreenCreating = null;
 
+let activeAlertWindowId = null;
+
 async function ensureOffscreenDocument() {
   if (offscreenCreating) {
     await offscreenCreating;
@@ -14,7 +16,10 @@ async function ensureOffscreenDocument() {
   }
 
   try {
-    if (chrome.runtime.getContexts) {
+    if (chrome.offscreen?.hasDocument) {
+      const hasDoc = await chrome.offscreen.hasDocument();
+      if (hasDoc) return;
+    } else if (chrome.runtime.getContexts) {
       const contexts = await chrome.runtime.getContexts({
         contextTypes: ['OFFSCREEN_DOCUMENT'],
         documentUrls: [chrome.runtime.getURL('offscreen/offscreen.html')]
@@ -22,7 +27,7 @@ async function ensureOffscreenDocument() {
       if (contexts && contexts.length > 0) return;
     }
   } catch (e) {
-    // getContexts might not be available in older Chrome builds
+    // Context check fallback
   }
 
   offscreenCreating = chrome.offscreen.createDocument({
@@ -30,7 +35,6 @@ async function ensureOffscreenDocument() {
     reasons: ['AUDIO_PLAYBACK'],
     justification: 'Play Pomodoro notification sounds and ambient focus audio'
   }).catch((err) => {
-    // Ignore already created error
     if (!err.message.includes('Only a single offscreen document may be created')) {
       console.warn('Offscreen document creation error:', err);
     }
@@ -44,15 +48,76 @@ async function ensureOffscreenDocument() {
 async function playAudio(action, params = {}) {
   try {
     await ensureOffscreenDocument();
-    await chrome.runtime.sendMessage({
-      target: 'offscreen',
-      action,
-      ...params
-    });
+    // Quick retry handshake to ensure offscreen script has mounted
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await chrome.runtime.sendMessage({
+          target: 'offscreen',
+          action,
+          ...params
+        });
+        if (res) break;
+      } catch (err) {
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 60));
+        } else {
+          console.warn('Failed to dispatch audio message:', err);
+        }
+      }
+    }
   } catch (e) {
     console.warn('Failed to dispatch audio message:', e);
   }
 }
+
+async function openAlertWindow(completedMode, nextMode, taskTitle = null) {
+  try {
+    if (activeAlertWindowId !== null) {
+      try {
+        await chrome.windows.remove(activeAlertWindowId);
+      } catch (e) {}
+      activeAlertWindowId = null;
+    }
+
+    const currentWin = await chrome.windows.getLastFocused().catch(() => null);
+    let left = undefined;
+    let top = undefined;
+    const width = 450;
+    const height = 310;
+
+    if (currentWin && currentWin.left !== undefined && currentWin.width) {
+      left = Math.round(currentWin.left + (currentWin.width - width) / 2);
+      top = Math.round(currentWin.top + (currentWin.height - height) / 2);
+    }
+
+    let alertUrl = `alert/alert.html?mode=${encodeURIComponent(completedMode)}&next=${encodeURIComponent(nextMode)}`;
+    if (taskTitle) {
+      alertUrl += `&task=${encodeURIComponent(taskTitle)}`;
+    }
+
+    const win = await chrome.windows.create({
+      url: chrome.runtime.getURL(alertUrl),
+      type: 'popup',
+      width,
+      height,
+      focused: true,
+      left,
+      top
+    });
+
+    if (win) {
+      activeAlertWindowId = win.id;
+    }
+  } catch (err) {
+    console.warn('Failed to open alert window:', err);
+  }
+}
+
+chrome.windows.onRemoved.addListener((windowId) => {
+  if (windowId === activeAlertWindowId) {
+    activeAlertWindowId = null;
+  }
+});
 
 // ----------------- Badge Management -----------------
 async function updateBadge() {
@@ -487,6 +552,11 @@ async function handleTimerComplete() {
     }
 
     await ExtensionStorage.setTimer(timer);
+  }
+
+  // 5. Open Alert Popup Window signaling the end of focus/break with 1-click button
+  if (settings.openAlertWindow !== false) {
+    await openAlertWindow(completedMode, nextMode, activeTask ? activeTask.title : null);
   }
 
   updateBadge();
