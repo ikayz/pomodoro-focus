@@ -6,5 +6,7 @@ ROADMAP.md
 .AppleDouble
 .LSOverride
 
-# Logs
+# Logs & Build Output
 *.log
+dist/
+*.zip
